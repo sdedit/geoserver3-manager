@@ -2668,10 +2668,10 @@ public class GeoServerRESTPublisher {
     public boolean createLayerGroup(String workspace, String name, GSLayerGroupEncoder group) {
         String url = restURL + "/rest";
         if (workspace == null) {
-            url += "/layergroups/";
+            url += "/layergroups";
         } else {
             group.setWorkspace(workspace);
-            url += "/workspaces/" + workspace + "/layergroups/";
+            url += "/workspaces/" + workspace + "/layergroups";
         }
 
         group.setName(name);
