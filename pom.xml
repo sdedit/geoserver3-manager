@@ -28,9 +28,10 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.dov-vlaanderen</groupId>
-    <artifactId>geoserver-manager</artifactId>
-    <version>1.9-SNAPSHOT</version>
+
+    <groupId>net.sf.sdedit</groupId>
+    <artifactId>geoserver3-manager</artifactId>
+    <version>1.0</version>
 
     <packaging>jar</packaging>
 
@@ -171,10 +172,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.0.2</version>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <release>21</release>
                 </configuration>
             </plugin>
 
@@ -230,20 +230,6 @@
       		</configuration>
     	    </plugin>
 	    <!--gpg-->
-    	    <plugin>
-	      <groupId>org.apache.maven.plugins</groupId>
-	      <artifactId>maven-gpg-plugin</artifactId>
-	      <version>1.5</version>
-	      <executions>
-		<execution>
-		  <id>sign-artifacts</id>
-		  <phase>verify</phase>
-		  <goals>
-		    <goal>sign</goal>
-		  </goals>
-		</execution>
-	      </executions>
-	    </plugin>
         </plugins>
 
         <!-- ======================================================== -->
