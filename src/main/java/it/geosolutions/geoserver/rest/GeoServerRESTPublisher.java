@@ -24,6 +24,22 @@
  */
 package it.geosolutions.geoserver.rest;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.List;
+import java.util.zip.ZipFile;
+
+import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import it.geosolutions.geoserver.rest.decoder.RESTCoverage;
 import it.geosolutions.geoserver.rest.decoder.RESTCoverageStore;
 import it.geosolutions.geoserver.rest.decoder.RESTStructuredCoverageGranulesList;
@@ -39,26 +55,11 @@ import it.geosolutions.geoserver.rest.encoder.GSResourceEncoder.ProjectionPolicy
 import it.geosolutions.geoserver.rest.encoder.GSWorkspaceEncoder;
 import it.geosolutions.geoserver.rest.encoder.coverage.GSCoverageEncoder;
 import it.geosolutions.geoserver.rest.encoder.feature.GSFeatureTypeEncoder;
+import it.geosolutions.geoserver.rest.encoder.gwc.GWCTileFormatEncoder;
+import it.geosolutions.geoserver.rest.manager.GeoServerRESTImporterManager;
 import it.geosolutions.geoserver.rest.manager.GeoServerRESTStructuredGridCoverageReaderManager;
 import it.geosolutions.geoserver.rest.manager.GeoServerRESTStructuredGridCoverageReaderManager.ConfigureCoveragesOption;
 import it.geosolutions.geoserver.rest.manager.GeoServerRESTStyleManager;
-import it.geosolutions.geoserver.rest.manager.GeoServerRESTImporterManager;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.zip.ZipFile;
-
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.io.FilenameUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import net.sf.json.JSONObject;
 
 /**
@@ -2654,7 +2655,15 @@ public class GeoServerRESTPublisher {
      * @return true if operation was successful
      */
     public boolean createLayerGroup(String name, GSLayerGroupEncoder group) {
-        return createLayerGroup(null, name, group);
+        return createLayerGroup(null, name, group, null);
+    }
+    
+    public boolean createLayerGroup(String ws, String name, GSLayerGroupEncoder group) {
+        return createLayerGroup(ws, name, group, null);
+    }
+    
+    public boolean createLayerGroup(String name, GSLayerGroupEncoder group, List<String> mimeTypes) {
+        return createLayerGroup(null, name, group, mimeTypes);
     }
 
     /**
@@ -2665,7 +2674,7 @@ public class GeoServerRESTPublisher {
      * @param group group encoder
      * @return true if operation was successful
      */
-    public boolean createLayerGroup(String workspace, String name, GSLayerGroupEncoder group) {
+    public boolean createLayerGroup(String workspace, String name, GSLayerGroupEncoder group, List<String> mimeTypes) {
         String url = restURL + "/rest";
         if (workspace == null) {
             url += "/layergroups";
@@ -2686,7 +2695,35 @@ public class GeoServerRESTPublisher {
                 LOGGER.warn("Error configuring LayerGroup " + name + " (" + sendResult + ")");
         }
 
-        return sendResult != null;
+        if (sendResult != null) {
+        	if (workspace == null) {
+        	    url = restURL + "/gwc/rest/layers/";		
+        	} else {
+        		url = restURL + "/gwc/rest/workspaces/" + workspace + "/layers/";
+        	}
+        	url += name;
+        	
+        	url = restURL + "/gwc/rest/layers/" + workspace + ":" + name + ".xml";
+        	
+        	
+        	if (mimeTypes != null && mimeTypes.size()>0) {
+        		var encoder = new GWCTileFormatEncoder(workspace == null ? name : workspace + ":" + name);
+        		encoder.setMimeTypes(mimeTypes);
+                sendResult = HTTPUtils.postXml(url, encoder.toString(), gsuser, gspass);
+                if (sendResult != null) {
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info("tile formats successfully configured: " + name);
+                    }
+                } else {
+                    if (LOGGER.isWarnEnabled())
+                        LOGGER.warn("Error configuring tile formats for LayerGroup " + name + " (" + sendResult + ")");
+                }        		
+        	}
+            
+        }
+        
+        return sendResult != null;    
+        
     }
 
     /**
